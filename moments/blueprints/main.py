@@ -2,6 +2,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_login import current_user, login_required
 from sqlalchemy import func, select
 from sqlalchemy.orm import with_parent
+from sqlalchemy import or_  
 
 from moments.core.extensions import db
 from moments.decorators import confirm_required, permission_required
@@ -9,6 +10,24 @@ from moments.forms.main import CommentForm, DescriptionForm, TagForm
 from moments.models import Collection, Comment, Follow, Notification, Photo, Tag, User
 from moments.notifications import push_collect_notification, push_comment_notification
 from moments.utils import flash_errors, redirect_back, rename_image, resize_image, validate_image
+from moments.utils_new import generate_alt_text, generate_tags  # Import new function
+import sys  
+from pathlib import Path
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient
+from msrest.authentication import CognitiveServicesCredentials
+
+from azure.cognitiveservices.vision.computervision import ComputerVisionClient          #2
+from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes     #2
+from msrest.authentication import CognitiveServicesCredentials                          #2
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+AZURE_CV_KEY = os.getenv("AZURE_CV_KEY")
+AZURE_CV_ENDPOINT = os.getenv("AZURE_CV_ENDPOINT")
+
+cv_client = ComputerVisionClient(AZURE_CV_ENDPOINT, CognitiveServicesCredentials(AZURE_CV_KEY))
 
 main_bp = Blueprint('main', __name__)
 
@@ -118,6 +137,12 @@ def get_avatar(filename):
     return send_from_directory(current_app.config['AVATARS_SAVE_PATH'], filename)
 
 
+# UPLOAD_FOLDER = "static/uploads/"
+# ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+# def allowed_file(filename):
+#     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @main_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 @confirm_required
@@ -130,12 +155,35 @@ def upload():
         if not validate_image(f.filename):
             return 'Invalid image.', 400
         filename = rename_image(f.filename)
-        f.save(current_app.config['MOMENTS_UPLOAD_PATH'] / filename)
+        
+        # Define and ensure the filepath is properly formatted
+        upload_folder = current_app.config['MOMENTS_UPLOAD_PATH']
+        filepath = Path(upload_folder) / filename  # Ensure it's a Path object
+        f.save(str(filepath))  # Save file using a string path
+
+        # f.save(current_app.config['MOMENTS_UPLOAD_PATH'] / filename)
         filename_s = resize_image(f, filename, current_app.config['MOMENTS_PHOTO_SIZES']['small'])
         filename_m = resize_image(f, filename, current_app.config['MOMENTS_PHOTO_SIZES']['medium'])
+
+        # Send local file to Azure to generate alternate text
+        alt_text = generate_alt_text(str(filepath))  # Pass the actual file path
+
+        # Generate image tags using Azure
+        detected_tags = generate_tags(str(filepath)) 
+
+        # Create or find `Tag` objects for each detected tag
+        tag_objects = []
+        for tag_name in detected_tags:
+            tag = Tag.query.filter_by(name=tag_name).first()  # Check if tag exists
+            if not tag:
+                tag = Tag(name=tag_name)  # Create new tag if it doesn't exist
+                db.session.add(tag)  # Add new tag to the DB
+            tag_objects.append(tag)
+
         photo = Photo(
-            filename=filename, filename_s=filename_s, filename_m=filename_m, author=current_user._get_current_object()
+            filename=filename, filename_s=filename_s, filename_m=filename_m, description=alt_text, author=current_user._get_current_object()
         )
+        photo.tags.extend(tag_objects)  # Associate tags with photo
         db.session.add(photo)
         db.session.commit()
     return render_template('main/upload.html')

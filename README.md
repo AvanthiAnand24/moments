@@ -6,6 +6,11 @@ Demo: http://moments.helloflask.com
 
 ![Screenshot](demo.png)
 
+## Overview
+This project enhances the Moments application with ML-powered features, including:
+1. Alternative Text Generation: Uses Azure Computer Vision API to generate image descriptions.
+2. Image Search with Object Detection: Automatically tags images based on detected objects, enabling search functionality.
+
 ## Installation
 
 Clone the repo:
@@ -24,6 +29,20 @@ $ pdm install
 > [!TIP]
 > If you don't have PDM installed, you can create a virtual environment with `venv` and install dependencies with `pip install -r requirements.txt`.
 
+Install python-dotenv (code loads API keys from a .env file):
+ pdm add python-dotenv
+
+## Set Up Azure API Credentials
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Create a "Computer Vision Resource" (if you haven’t already).
+3. Navigate to "Keys and Endpoint" and copy your API key.
+4. Add the following to your `.env` file.
+
+Set Up Environment Variables:
+Create a `.env` file in the project root and add the following credentials:
+    AZURE_CV_KEY=your_azure_computer_vision_key
+    AZURE_CV_ENDPOINT=https://your-region.api.cognitive.microsoft.com/
+    
 To initialize the app, run the `flask init-app` command:
 
 ```
@@ -47,6 +66,21 @@ Now you can run the app:
 $ pdm run flask run
 * Running on http://127.0.0.1:5000/
 ```
+
+Using the Features
+
+1. Upload Images for Alt Text Generation
+Navigate to /upload
+Upload an image, and the system will automatically generate alt text.
+
+2. Search Images by Detected Objects
+Go to /search?q=your_keyword
+The system will retrieve images with matching detected objects.
+
+## Future Improvements
+1. Implement user feedback loops to refine ML-generated descriptions.
+2. Optimize database queries for large-scale image search.
+3. Explore self-hosted models to reduce dependency on cloud APIs.
 
 ## License
 
