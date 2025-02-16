@@ -32,16 +32,15 @@ $ pdm install
 Install python-dotenv (code loads API keys from a .env file):
  pdm add python-dotenv
 
-## Set Up Azure API Credentials
+Set Up Azure API Credentials
 1. Go to [Azure Portal](https://portal.azure.com/)
 2. Create a "Computer Vision Resource" (if you haven’t already).
 3. Navigate to "Keys and Endpoint" and copy your API key.
-4. Add the following to your `.env` file.
-
-Set Up Environment Variables:
-Create a `.env` file in the project root and add the following credentials:
+4. Set Up Environment Variables- Create a `.env` file in the project root and add the following credentials:
+    ```
     AZURE_CV_KEY=your_azure_computer_vision_key
     AZURE_CV_ENDPOINT=https://your-region.api.cognitive.microsoft.com/
+    ```
     
 To initialize the app, run the `flask init-app` command:
 
