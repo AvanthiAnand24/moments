@@ -41,7 +41,7 @@ Set Up Azure API Credentials
     AZURE_CV_KEY=your_azure_computer_vision_key
     AZURE_CV_ENDPOINT=https://your-region.api.cognitive.microsoft.com/
     ```
-    
+
 To initialize the app, run the `flask init-app` command:
 
 ```
@@ -68,12 +68,12 @@ $ pdm run flask run
 
 Using the Features
 
-1. Upload Images for Alt Text Generation
-Navigate to /upload
+1. Upload Images for Alt Text Generation:
+Navigate to /upload. 
 Upload an image, and the system will automatically generate alt text.
 
-2. Search Images by Detected Objects
-Go to /search?q=your_keyword
+2. Search Images by Detected Objects: 
+Go to /search?q=your_keyword. 
 The system will retrieve images with matching detected objects.
 
 ## Future Improvements
